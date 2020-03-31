@@ -1,7 +1,15 @@
 from IPython.display import clear_output
+from recognition import Predictor
 import cv2
 import time
 import argparse
+
+model_path = 'models/facenet_keras.h5'
+train_path = 'data/train'
+clf_path = "classifier.pickle"
+id_path = "identities_dict.pickle"
+
+system = Predictor(model_path, train_path)
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--video_source', type=str, default="0", help='Path to video or "0" if you want to use webcam')

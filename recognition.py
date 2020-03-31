@@ -77,7 +77,9 @@ class Predictor:
     def __init__(self, model_path, face_database_path, classifier_path=None, identities_path=None, unbalanced=True):
         self.unknown_thresh = 0.3
         self.N_aug = 5
+        print("Loading FaceNet...")
         self.model = load_model(model_path)
+        print("Loading finished")
         self.face_database_path = face_database_path
         if identities_path is not None:
             self.identities = self.loadIdentities(identities_path)
@@ -90,7 +92,9 @@ class Predictor:
             print(class_weights)
             print("Processing finished")
             self.classifier = SVC(kernel='linear', probability=True, class_weight=class_weights)
+            print("Training the classifier...")
             self.classifier.fit(X, y)
+            print("Finished")
             self.X = X
             self.y = y
             self.saveIdentities("./identities_dict.pickle", self.identities)
