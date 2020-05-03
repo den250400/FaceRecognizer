@@ -6,8 +6,7 @@ from PIL import Image
 from pyautogui import prompt
 import cv2
 import numpy as np
-import time
-import math
+from pathlib import PurePath
 from sklearn.svm import SVC
 import pickle
 from IPython.display import clear_output
@@ -115,7 +114,8 @@ class Predictor:
                     if faces.shape[0] == 0:
                         continue
                     image = faces[0]
-                name = folder.split("\\", 1)[1]
+                folder_path = PurePath(folder)
+                name = str(folder_path.relative_to(folder_path.parts[0]))
                 image = cv2.resize(image, (160, 160))
                 image = normalizeImage(image)
                 embedding = self.computeEmbeddings(image)
