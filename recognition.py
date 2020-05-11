@@ -73,9 +73,12 @@ def extractFaces(image, normalize=True):
     return faces, coords
 
 class Predictor:
-    def __init__(self, model_path, face_database_path, classifier_path=None, identities_path=None, unbalanced=True):
+    def __init__(self, model_path, face_database_path, classifier_path=None, identities_path=None, unbalanced=True, continuous_train=False, confidence_thresh_train=0.38, max_photos=20):
         self.unknown_thresh = 0.3
         self.N_aug = 5
+        self.continuous_train = continuous_train
+        self.confidence_thresh_train = confidence_thresh_train
+        self.max_photos = max_photos
         print("Loading FaceNet...")
         self.model = load_model(model_path)
         print("Loading finished")
@@ -114,8 +117,9 @@ class Predictor:
                     if faces.shape[0] == 0:
                         continue
                     image = faces[0]
-                folder_path = PurePath(folder)
-                name = str(folder_path.relative_to(folder_path.parts[0]))
+                name = folder.split("\\", 1)[1]
+                #folder_path = PurePath(folder)
+                #name = str(folder_path.relative_to(folder_path.parts[0]))
                 image = cv2.resize(image, (160, 160))
                 image = normalizeImage(image)
                 embedding = self.computeEmbeddings(image)
@@ -188,6 +192,9 @@ class Predictor:
                 label = "Unknown person"
             else:
                 label = self.identities[classes[i]]
+            # Continous train
+            if np.max(probs[i])  > self.confidence_thresh_train and self.continuous_train:
+                self.continuousTrain(emb[i], classes[i])
             cv2.putText(image, label, (coords[i, 0], coords[i, 1]-10), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
         cv2.imshow("Detections", image)  
         
@@ -240,3 +247,14 @@ class Predictor:
             class_weights = self.computeClassWeights(self.y)
             self.classifier = SVC(kernel='linear', probability=True, class_weight=class_weights)
             self.classifier.fit(self.X, self.y)
+
+    def continuousTrain(self, emb, label):
+        if self.y[self.y==label].shape[0] >= self.max_photos:
+            return 
+        print("Adding %s embedding to train data"%self.identities[label])
+        self.X = np.append(self.X, emb.reshape(1, -1), axis=0)
+        self.y = np.append(self.y, np.array([label]), axis=0)
+        # Retraining the classifier
+        class_weights = self.computeClassWeights(self.y)
+        self.classifier = SVC(kernel='linear', probability=True, class_weight=class_weights)
+        self.classifier.fit(self.X, self.y)
