@@ -74,8 +74,8 @@ def extractFaces(image, normalize=True):
 
 class Predictor:
     def __init__(self, model_path, face_database_path, classifier_path=None, identities_path=None, unbalanced=True, continuous_train=False, confidence_thresh_train=0.38, max_photos=20):
-        self.unknown_thresh = 0.3
-        self.N_aug = 5
+        self.unknown_thresh = 0.39
+        self.N_aug = 20
         self.continuous_train = continuous_train
         self.confidence_thresh_train = confidence_thresh_train
         self.max_photos = max_photos
@@ -184,8 +184,8 @@ class Predictor:
         probs = self.classifier.predict_proba(emb)
         self.coords = coords
         self.faces = faces
+        image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
         for i in range(classes.shape[0]):
-            image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
             cv2.rectangle(image, (coords[i, 0], coords[i, 1]), (coords[i, 2], coords[i, 3]), (0, 255, 0), 2)
             clear_output(wait=True)
             if np.max(probs[i]) < self.unknown_thresh:
@@ -230,7 +230,7 @@ class Predictor:
                     emb = l2_normalize(self.computeEmbeddings(face_img))
                     # Appending embeddings and labels
                     self.X = np.append(self.X, emb, axis=0)
-                    self.y = np.append(self.y, class_number.reshape(1,), axis=0)
+                    self.y = np.append(self.y, np.array([class_number]).reshape(1,), axis=0)
                     # Saving the image to the database
                     tosave = cv2.cvtColor(denormalizeImage(face_img), cv2.COLOR_RGB2BGR)
                     cv2.imwrite(self.face_database_path+"/"+name+"/"+name+str(self.y[self.y==class_number].shape[0])+".jpg", tosave)
@@ -239,7 +239,7 @@ class Predictor:
                 emb = l2_normalize(self.computeEmbeddings(face_img))
                 # Appending embeddings and labels
                 self.X = np.append(self.X, emb, axis=0)
-                self.y = np.append(self.y, class_number.reshape(1,), axis=0)
+                self.y = np.append(self.y, np.array([class_number]).reshape(1,), axis=0)
                 # Saving the image to the database
                 tosave = cv2.cvtColor(denormalizeImage(face_img), cv2.COLOR_RGB2BGR)
                 cv2.imwrite(self.face_database_path+"/"+name+"/"+name+str(self.y[self.y==class_number].shape[0])+".jpg", tosave)
